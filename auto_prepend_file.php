@@ -25,7 +25,7 @@ class DEBUG
     /**
      * dump data and continue
      *
-     * @param mixed can process multiple parameters
+     * @param mixed $data can process multiple parameters
      */
     public static function dumplive($data)
     {
@@ -36,6 +36,7 @@ class DEBUG
         $args = func_get_args();
         foreach ($args as $arg) {
             $data  = DEBUG::_add_called_in();
+            $out = [];
             $out[] = $data[0];
             $out[] = DEBUG::_dump($arg);
 
@@ -51,7 +52,7 @@ class DEBUG
     /**
      * dump data and die
      *
-     * @param mixed can process multiple parameters
+     * @param mixed $data can process multiple parameters
      */
     public static function dump($data)
     {
@@ -181,7 +182,7 @@ class DEBUG
         foreach ($trace as $i => $line) {
             $span   = array();
             $span[] = '<span onclick="this.style.backgroundColor=this.style.backgroundColor == \'' . $markedColor
-                      . '\' ? \'\' : \'' . $markedColor . '\'" >';
+                . '\' ? \'\' : \'' . $markedColor . '\'" >';
             $span[] = $trace[$i];
             $span[] = '</span>';
 
@@ -256,11 +257,11 @@ class DEBUG
             } else {
                 $out   = array('<div>');
                 $out[] = '<span style="font-weight:normal;">Class</span> <span style="font-weight:bold;">' . $class_name
-                         . '</span>';
+                    . '</span>';
 
                 $reflection = new ReflectionClass($object);
                 $out[]
-                            =
+                    =
                     ' <a href="file:///' . ltrim($reflection->getFileName(), '/') . '" onclick="return false;" >'
                     . $reflection->getFileName() . '</a>';
                 $out[]      = '</div>';
@@ -295,7 +296,7 @@ class DEBUG
                             } elseif (is_null($default)) {
                                 $par[] = '= NULL';
                             } else {
-                                $par[] = '= ' . var_export($default, 1);
+                                $par[] = '= ' . var_export($default, true);
                             }
                         }
                         $params_string[] = implode(' ', $par);
@@ -343,10 +344,10 @@ class DEBUG
                             ) . ')' . '</span>';
 
                         $methods[$i] .= ' <span id="'
-                                        . $id . '" style="border:1px solid black;display:none;padding-right:10px;text-align:left;" >';
+                            . $id . '" style="border:1px solid black;display:none;padding-right:10px;text-align:left;" >';
                         $methods[$i] .= $class . ' <a href="file:///' . ltrim($declaring_class->getFileName(), '/')
-                                        . '" onclick="return false;" >' . $declaring_class->getFileName()
-                                        . '</a> : ' . $refMethod->getStartLine();
+                            . '" onclick="return false;" >' . $declaring_class->getFileName()
+                            . '</a> : ' . $refMethod->getStartLine();
                         $methods[$i] .= '</span>';
                     }
 
@@ -379,7 +380,7 @@ class DEBUG
      *
      * @param Object $object
      *
-     * @return string path to file
+     * @return string|null path to file
      */
     public static function class_file($object)
     {
@@ -416,6 +417,12 @@ class DEBUG
         return true;
     }
 
+    /**
+     * @param mixed $value
+     * @param bool  $html
+     * @param bool  $isLog
+     * @return string|void
+     */
     public static function _dump($value, $html = true, $isLog = false)
     {
         if (!\DEBUG::isEnabled()) {
@@ -436,10 +443,10 @@ class DEBUG
         ob_end_clean();
 
 
-        if (is_object($value) && $value instanceof Zend_Db_Select) {
-            $sqloutput = DEBUG::getFormattedSQL($value->__toString());
+        if (is_object($value) && is_a($value, 'Zend_Db_Select')) {
+            $sqloutput = DEBUG::getFormattedSQL((string)$value);
             if (empty($_SERVER['DOCUMENT_ROOT']) || !$html) {
-                null;
+
             } else {
                 $id = uniqid();
                 $sqloutput
@@ -454,10 +461,10 @@ class DEBUG
                 $sqloutput
                     .=
                     '<div style="border:1px solid brown;white-space:normal;margin-top:15px;padding:5px;display:none;" id="'
-                    . $id . '_full" >' . $value->__toString() . '</div>';
+                    . $id . '_full" >' . (string)$value . '</div>';
             }
             if ($isLog) {
-                $output = $value->__toString();
+                $output = (string)$value;
             } else {
                 $output = $sqloutput . "\n\n" . $output;
             }
@@ -509,7 +516,7 @@ class DEBUG
             } else {
                 $class_file
                     = '<a href="file:///' . ltrim($reflection->getFileName(), '/') . '" onclick="return false;" >'
-                      . $reflection->getFileName() . '</a>' . "\n";
+                    . $reflection->getFileName() . '</a>' . "\n";
                 ob_start();
                 DEBUG::methodslive($value);
                 $methods = ob_get_contents();
@@ -657,7 +664,7 @@ class DEBUG
 
             $display = $minimized ? 'none' : 'block';
             $html[]
-                     =
+                =
                 '<pre style="padding:5px;text-align:left;border:1px solid black;float:none;background:white;min-width:850px;max-width:1260px;margin:10px auto;display:'
                 . $display . ';" id="' . $id . '" >';
             $html[]  = $data;
@@ -679,7 +686,7 @@ class DEBUG
         // find where function is called
         $i = 0;
         while (count($trace) > $i && array_key_exists($i, $trace) && array_key_exists('class', $trace[$i])
-               && $trace[$i]['class'] == get_class()) {
+            && $trace[$i]['class'] == get_class()) {
             $i++;
         }
 
@@ -749,11 +756,11 @@ class DEBUG
                 )
             ) {
                 $out[]
-                          =
+                    =
                     "\n" . $trace[$k]['class'] . '::' . $trace[$k]['function'] . ' ' . $trace[$i - 1]['file'] . ' : '
                     . $trace[$i - 1]['line'] . "\n";
                 $calledIn = array($trace[$k]['class'], $trace[$k]['function'], $trace[$i - 1]['file'],
-                                  $trace[$i - 1]['line']);
+                    $trace[$i - 1]['line']);
             }
 
         } else {
@@ -780,12 +787,12 @@ class DEBUG
                 )
             ) {
                 $out[]    = '&nbsp;<span style="color:gray;" >' . $trace[$k]['class'] . '::' . $trace[$k]['function']
-                            . '</span> <a href="file:///' . ltrim($trace[$k]['file'], '/')
-                            . '" onclick="return false;" >' . $trace[$i - 1]['file'] . '</a> : ' . $trace[
-                                                                                                   $i - 1]['line']
-                            . '&nbsp;';
+                    . '</span> <a href="file:///' . ltrim($trace[$k]['file'], '/')
+                    . '" onclick="return false;" >' . $trace[$i - 1]['file'] . '</a> : ' . $trace[
+                    $i - 1]['line']
+                    . '&nbsp;';
                 $calledIn = array($trace[$k]['class'], $trace[$k]['function'], $trace[$i - 1]['file'],
-                                  $trace[$i - 1]['line']);
+                    $trace[$i - 1]['line']);
             }
             $out[] = '</div>';
             $out[] = '</div>';
@@ -931,13 +938,14 @@ class DEBUG
      * Returns beutifyed array code, that you can paste directly into php script.
      * Is working only with string values.
      *
-     * @param type $array
-     * @param type $sort
-     * @param type $space_symbol
-     * @param type $tab_length optional <br/> or \n will be used accordingly
-     * @param type $newline
+     * @param array    $array
+     * @param bool     $sort
+     * @param string   $space_symbol
+     * @param int      $tab_length optional <br/> or \n will be used accordingly
+     * @param bool     $return
+     * @param bool|int $recursion
      *
-     * @return string|false php script
+     * @return string|bool php script
      */
     public static function beutifyArray(
         $array, $sort = false, $space_symbol = null, $tab_length = 4, $return = false, $recursion = false
@@ -988,7 +996,7 @@ class DEBUG
 
         foreach ($array as $key => $val) {
             if (is_numeric($val)) {
-                null;
+
             } elseif (is_string($val)) {
                 if (strpos($val, "'") !== false) {
                     $val = '"' . $val . '"';
@@ -1029,7 +1037,7 @@ class DEBUG
         if (!$recursion) {
             $out[] = ');';
         } else {
-            $len = $recursion * $tab_length * 2 - $tab_length * 4;
+            $len = (int)$recursion * $tab_length * 2 - $tab_length * 4;
             if ($len <= 0) {
                 $len = $tab_length;
             }
@@ -1063,10 +1071,12 @@ class DEBUG
      * @staticvar null $microtime_start
      * @staticvar null $microtime_last
      *
-     * @param type $last
-     * @param type $round
+     * @param bool $last
+     * @param bool $html
+     * @param bool $echo
+     * @param int  $round
      *
-     * @return string
+     * @return string|void
      */
     public static function get_execution_time($last = false, $html = true, $echo = true, $round = 4)
     {
@@ -1099,7 +1109,7 @@ class DEBUG
                 DEBUG::get_execution_time();
                 $microtime_last = $microtime_start;
             }
-            $ms = (microtime(true) - $microtime_last) * 1000;
+            $ms = (microtime(true) - (float)$microtime_last) * 1000;
 
             $sec = round($ms / 1000, $round);
             $min = round($sec / 60, $round);
@@ -1130,8 +1140,7 @@ class DEBUG
                 return $return;
             }
         }
+
+        return;
     }
-
 }
-
-?>
