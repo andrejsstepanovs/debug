@@ -676,7 +676,7 @@ class DEBUG // @codingStandardsIgnoreLine
     public static function addCalledIn()
     {
         if (!\DEBUG::isEnabled()) {
-            return;
+            return [];
         }
 
         $trace = debug_backtrace();
@@ -922,7 +922,7 @@ class DEBUG // @codingStandardsIgnoreLine
         }
 
         $log = array(get_class($object), get_class_methods($object));
-        DEBUG::log($log, $filename);
+        DEBUG::log($log, true, $filename);
 
         return $log;
     }
